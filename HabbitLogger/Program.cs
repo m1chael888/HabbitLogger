@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.Sqlite;
-using System.Linq.Expressions;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -7,24 +6,16 @@ namespace HabbitLogger
     {
         static async Task Main(string[] args)
         {
-            //test
-            InitializeDb(); 
-            Menu();
-
-            void InitializeDb()
+            try
             {
-                string dbPath = "trackington.db";
-                using var connection = new SqliteConnection($"Data Source={dbPath}");
-                connection.Open();
-
-                string sql = @"CREATE TABLE habits(
-                             id INTEGER PRIMARY KEY,
-                             habitName TEXT NOT NULL,
-                             habitUnit TEXT NOT NULL,
-                             habitCount INTEGER NULL)";
-                using var command = new SqliteCommand(sql, connection);
-                command.ExecuteNonQuery();
+                InitializeDb(); 
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
+            Menu();
 
             void Menu()
             {
@@ -68,6 +59,24 @@ namespace HabbitLogger
                             Console.ForegroundColor = ConsoleColor.White;
                             break;
                     }
+                }
+
+                void InitializeDb()
+                {
+                    string db = "Data Source=trackington.db";
+                    using var connection = new SqliteConnection(db);
+                    connection.Open();
+
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                        @"CREATE TABLE IF NOT EXISTS hydrate(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Date TEXT,
+                        Qty INTEGER
+                        )";
+                    command.ExecuteNonQuery();
+
+                    connection.Close();
                 }
             }
         }
