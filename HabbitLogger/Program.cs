@@ -1,13 +1,12 @@
-﻿using System;
-using System.Data;
-
+﻿using Microsoft.Data.Sqlite;
+//// m1chael888 \\\
 namespace HabbitLogger
-{
+{ 
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            // todo: check for sqlite database, create if not found
+            InitializeDb();
             Menu();
 
             void Menu()
@@ -48,11 +47,18 @@ namespace HabbitLogger
                         default:
                             Console.Clear();
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Please enter a valid menu number (1-5)");
+                            Console.WriteLine("!!! Please enter a valid menu number (1-5)");
                             Console.ForegroundColor = ConsoleColor.White;
                             break;
                     }
                 }
+            }
+
+            void InitializeDb()
+            {
+                string dbPath = "trackington.db";
+                using var connection = new SqliteConnection($"Data Source={dbPath}");
+                connection.Open();
             }
         }
     }
