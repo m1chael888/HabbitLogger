@@ -7,6 +7,7 @@ namespace HabbitLogger
     {
         static async Task Main(string[] args)
         {
+            //test
             InitializeDb(); 
             Menu();
 
