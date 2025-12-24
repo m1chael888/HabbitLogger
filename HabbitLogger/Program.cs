@@ -7,14 +7,7 @@ namespace HabbitLogger
     {
         static async Task Main(string[] args)
         {
-            try
-            { 
-                InitializeDb(); 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error initializing db: {ex.Message}");
-            }
+            InitializeDb(); 
             Menu();
 
             void InitializeDb()
