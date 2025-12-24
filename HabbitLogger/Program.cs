@@ -1,13 +1,36 @@
 ﻿using Microsoft.Data.Sqlite;
-//// m1chael888 \\\
+using System.Linq.Expressions;
+//// m1chael888 \\\\
 namespace HabbitLogger
 { 
     internal class Program
     {
         static async Task Main(string[] args)
         {
-            InitializeDb();
+            try
+            { 
+                InitializeDb(); 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing db: {ex.Message}");
+            }
             Menu();
+
+            void InitializeDb()
+            {
+                string dbPath = "trackington.db";
+                using var connection = new SqliteConnection($"Data Source={dbPath}");
+                connection.Open();
+
+                string sql = @"CREATE TABLE habits(
+                             id INTEGER PRIMARY KEY,
+                             habitName TEXT NOT NULL,
+                             habitUnit TEXT NOT NULL,
+                             habitCount INTEGER NULL)";
+                using var command = new SqliteCommand(sql, connection);
+                command.ExecuteNonQuery();
+            }
 
             void Menu()
             {
@@ -52,13 +75,6 @@ namespace HabbitLogger
                             break;
                     }
                 }
-            }
-
-            void InitializeDb()
-            {
-                string dbPath = "trackington.db";
-                using var connection = new SqliteConnection($"Data Source={dbPath}");
-                connection.Open();
             }
         }
     }
