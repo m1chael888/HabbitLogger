@@ -1,10 +1,4 @@
 ﻿using Microsoft.Data.Sqlite;
-using System;
-using System.ComponentModel;
-using System.Globalization;
-using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -13,7 +7,7 @@ namespace HabbitLogger
         static void Main(string[] args)
         {
             string db = "Data Source=trackington.db";
-            var habitList = new List<habit>();
+            var habitList = new List<Habit>();
 
             try
             {
@@ -26,46 +20,47 @@ namespace HabbitLogger
             
             Menu();
 
-            //////////
+            ////
             void Menu()
             {
                 Console.Clear();
 
                 bool done = false;
-                string? input;
 
                 Console.WriteLine(@"//// Trackington Menu \\\\");
                 Console.WriteLine("\n1 - View habit list and management");
                 Console.WriteLine("2 - Create new habit to track"); // challenge
                 Console.WriteLine("0 - Close trackington");
                 Console.Write("\nEnter the number of your menu option: ");
+                string input = Console.ReadLine();
 
                 while (!done)
                 {
-                    input = Console.ReadLine();
+                    
 
                     switch (input)
                     {
                         case "1":
-                            HabitDashboard(); //
+                            HabitDashboard();
                             break;
                         case "2":
-                            
+                            NewHabit();
                             break;
                         case "3":
-                            CreateHabit(); // challenge
+                            NewHabit(); // challenge
                             break;
                         case "0":
                             CloseApp();
                             break;
                         default:
                             ErrorMsg("Please enter a valid menu number (0-2): ");
+                            input = Console.ReadLine();
                             break;
                     }
                 }
             }
 
-            ///////////////
+            ////
             void HabitDashboard()
             {
                 Console.Clear();
@@ -86,7 +81,7 @@ namespace HabbitLogger
                         InsertOccurance();
                         break;
                     case "2":
-                        
+                        UpdateRecord();
                         break;
                     case "3":
                         DeleteRecord();
@@ -104,7 +99,7 @@ namespace HabbitLogger
                 }
             }
 
-            ///////////
+            ////
             void ShowHabits()
             {
                 habitList.Clear();
@@ -122,7 +117,7 @@ namespace HabbitLogger
                         while (reader.Read())
                         {
                             habitList.Add(
-                                new habit
+                                new Habit
                                 {
                                     Id = reader.GetInt32(0),
                                     Date = reader.GetString(1),
@@ -137,7 +132,7 @@ namespace HabbitLogger
                 }
             }
 
-            /////////////////
+            ////
             void InsertOccurance()
             {
                 string date = CaptureDate();
@@ -156,7 +151,7 @@ namespace HabbitLogger
                 HabitDashboard();
             }
 
-            ///////////////
+            ///
             int CaptureQty()
             {
                 Console.Write("Enter the number of times you hydrated: ");
@@ -175,7 +170,7 @@ namespace HabbitLogger
                 return Convert.ToInt32(input);
             }
 
-            ///////////////////
+            //////
             string CaptureDate()
             {
                 Console.Write("\nWhat day did you hydrate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
@@ -199,7 +194,7 @@ namespace HabbitLogger
                 return result;
             }
 
-            /////////////////
+            ////
             void DeleteRecord()
             {
                 Console.Write("\nEnter the record number you would like to delete: ");
@@ -225,6 +220,7 @@ namespace HabbitLogger
                 HabitDashboard();
             }
             
+            ////
             bool validRecordNum(int id)
             {
                 foreach (var h in habitList)
@@ -234,13 +230,19 @@ namespace HabbitLogger
                 return false;
             }
 
-            /////////////////
-            void CreateHabit()
+            ////
+            void NewHabit()
             {
 
             }
 
-            //////////////////
+            ////
+            void UpdateRecord()
+            {
+
+            }
+
+            ////
             void InitializeDb()
             {
                 using var connection = new SqliteConnection(db);
@@ -260,6 +262,7 @@ namespace HabbitLogger
                 }
             }
 
+            ////
             void ErrorMsg(string message)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -267,6 +270,7 @@ namespace HabbitLogger
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
+            ////
             void CloseApp()
             {
                 Console.WriteLine();
@@ -276,7 +280,7 @@ namespace HabbitLogger
         }
     }
 
-    public class habit
+    public class Habit
     {
         public int Id { get; set; }
         public string Date { get; set; }
