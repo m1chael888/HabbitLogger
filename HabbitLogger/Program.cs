@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
@@ -12,6 +13,7 @@ namespace HabbitLogger
         static void Main(string[] args)
         {
             string db = "Data Source=trackington.db";
+            var habitList = new List<habit>();
 
             try
             {
@@ -105,14 +107,13 @@ namespace HabbitLogger
             ///////////
             void ShowHabits()
             {
+                habitList.Clear();
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
 
                     command.CommandText = $"SELECT * FROM hydrate";
-
-                    var habitList = new List<habit>();
 
                     SqliteDataReader reader = command.ExecuteReader();
 
@@ -166,7 +167,7 @@ namespace HabbitLogger
                 {
                     if (!int.TryParse(input, out int qty))
                     {
-                        ErrorMsg("Please enter a whole number");
+                        ErrorMsg("Please enter a whole number: ");
                         input = Console.ReadLine();
                     }
                     else done = true;
@@ -201,9 +202,38 @@ namespace HabbitLogger
             /////////////////
             void DeleteRecord()
             {
+                Console.Write("\nEnter the record number you would like to delete: ");
+                string input = Console.ReadLine();
+
+                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                {
+                    ErrorMsg($"Please enter a valid record number listed above: ");
+                    input = Console.ReadLine();
+                }
                 
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'";
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+                Console.Clear();
+                HabitDashboard();
             }
             
+            bool validRecordNum(int id)
+            {
+                foreach (var h in habitList)
+                {
+                    if (h.Id == id) return true;
+                }
+                return false;
+            }
+
             /////////////////
             void CreateHabit()
             {
