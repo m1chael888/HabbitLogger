@@ -34,8 +34,7 @@ namespace HabbitLogger
 
                 Console.WriteLine(@"//// Trackington Menu \\\\");
                 Console.WriteLine("\n1 - View habit list and management");
-                Console.WriteLine("2 - Add new habit occurances");
-                Console.WriteLine("3 - Create new habit to track"); // challenge
+                Console.WriteLine("2 - Create new habit to track"); // challenge
                 Console.WriteLine("0 - Close trackington");
                 Console.Write("\nEnter the number of your menu option: ");
 
@@ -46,10 +45,10 @@ namespace HabbitLogger
                     switch (input)
                     {
                         case "1":
-                            ReadHabit(); //
+                            HabitDashboard(); //
                             break;
                         case "2":
-                            InsertOccurance(); 
+                            
                             break;
                         case "3":
                             CreateHabit(); // challenge
@@ -58,18 +57,54 @@ namespace HabbitLogger
                             CloseApp();
                             break;
                         default:
-                            ErrorMsg("Please enter a valid menu number (1-5): ");
+                            ErrorMsg("Please enter a valid menu number (0-2): ");
                             break;
                     }
                 }
             }
 
             ///////////////
-            void ReadHabit()
+            void HabitDashboard()
             {
                 Console.Clear();
                 Console.WriteLine(@"//// Manage habits \\\\" + "\n");
+                ShowHabits();
 
+                Console.WriteLine("\n1 - Insert a record");
+                Console.WriteLine("2 - Update a record");
+                Console.WriteLine("3 - Delete a record");
+                Console.WriteLine("4 - Return to menu");
+                Console.WriteLine("0 - Close Trackington");
+                Console.Write("\nEnter the number of your menu option: ");
+                string input = Console.ReadLine();
+
+                switch (input)
+                {
+                    case "1":
+                        InsertOccurance();
+                        break;
+                    case "2":
+                        
+                        break;
+                    case "3":
+                        DeleteRecord();
+                        break;
+                    case "4":
+                        Menu();
+                        break;
+                    case "0":
+                        CloseApp();
+                        break;
+                    default:
+                        ErrorMsg("Please enter a valid menu number (0-4): ");
+                        input = Console.ReadLine();
+                        break;
+                }
+            }
+
+            ///////////
+            void ShowHabits()
+            {
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
@@ -91,12 +126,12 @@ namespace HabbitLogger
                                     Id = reader.GetInt32(0),
                                     Date = reader.GetString(1),
                                     Qty = reader.GetInt32(2)
-                                });                        
+                                });
                         }
                     }
                     foreach (var h in habitList)
                     {
-                        Console.WriteLine($"{h.Id}: Hydrated {h.Qty} times on {h.Date}");
+                        Console.WriteLine($"Record {h.Id}: Hydrated {h.Qty} times on {h.Date}");
                     }
                 }
             }
@@ -104,9 +139,6 @@ namespace HabbitLogger
             /////////////////
             void InsertOccurance()
             {
-                Console.Clear();
-                Console.WriteLine(@"//// New hydration entry \\\\");
-                
                 string date = CaptureDate();
                 int qty = CaptureQty();
 
@@ -120,37 +152,10 @@ namespace HabbitLogger
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-
-                Console.Clear();
-                Console.WriteLine(@"//// Success! Whats next? \\\\");
-                Console.WriteLine("\n1 - Make another entry");
-                Console.WriteLine("2 - Return to menu");
-                Console.WriteLine("0 - Close trackington");
-                Console.Write("\nEnter the number of your menu option: ");
-                string input = Console.ReadLine();
-
-                bool done = false;
-                while (!done)
-                {
-                    switch (input)
-                    {
-                        case "1":
-                            InsertOccurance();
-                            break;
-                        case "2":
-                            Menu();
-                            break;
-                        case "0":
-                            CloseApp();
-                            break;
-                        default:
-                            ErrorMsg("Please enter a valid menu number (1-3): ");
-                            input = Console.ReadLine();
-                            break;
-                    }
-                }
+                HabitDashboard();
             }
 
+            ///////////////
             int CaptureQty()
             {
                 Console.Write("Enter the number of times you hydrated: ");
@@ -187,16 +192,16 @@ namespace HabbitLogger
                 }
                 
                 if (result.ToLower() == "today") result = DateTime.Today.ToString("MM/dd/yyyy");
-                Console.WriteLine($"Chosen date: {result}\n");
+                Console.WriteLine($"Chosen date: {result}");
                 //TODO: if user enters existing date, prompt them to combine qtys
 
                 return result;
             }
 
             /////////////////
-            void DeleteHabit()
+            void DeleteRecord()
             {
-
+                
             }
             
             /////////////////
