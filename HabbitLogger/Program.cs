@@ -1,6 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Globalization;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
@@ -31,11 +33,10 @@ namespace HabbitLogger
                 string? input;
 
                 Console.WriteLine(@"//// Trackington Menu \\\\");
-                Console.WriteLine("\n1 - View your habit progress");
-                Console.WriteLine("2 - Update your habit progress");
-                Console.WriteLine("3 - Remove a habit and its history");
-                Console.WriteLine("4 - Add a new habit to track");
-                Console.WriteLine("5 - Close trackington");
+                Console.WriteLine("\n1 - View habit list and management");
+                Console.WriteLine("2 - Add new habit occurances");
+                Console.WriteLine("3 - Create new habit to track"); // challenge
+                Console.WriteLine("0 - Close trackington");
                 Console.Write("\nEnter the number of your menu option: ");
 
                 while (!done)
@@ -45,18 +46,15 @@ namespace HabbitLogger
                     switch (input)
                     {
                         case "1":
-                            ReadHabit();
+                            ReadHabit(); //
                             break;
                         case "2":
-                            InsertOccurance();
+                            InsertOccurance(); 
                             break;
                         case "3":
-                            DeleteHabit();
+                            CreateHabit(); // challenge
                             break;
-                        case "4":
-                            CreateHabit();
-                            break;
-                        case "5":
+                        case "0":
                             CloseApp();
                             break;
                         default:
@@ -69,7 +67,38 @@ namespace HabbitLogger
             ///////////////
             void ReadHabit()
             {
-                
+                Console.Clear();
+                Console.WriteLine(@"//// Manage habits \\\\" + "\n");
+
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"SELECT * FROM hydrate";
+
+                    var habitList = new List<habit>();
+
+                    SqliteDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            habitList.Add(
+                                new habit
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Date = reader.GetString(1),
+                                    Qty = reader.GetInt32(2)
+                                });                        
+                        }
+                    }
+                    foreach (var h in habitList)
+                    {
+                        Console.WriteLine($"{h.Id}: Hydrated {h.Qty} times on {h.Date}");
+                    }
+                }
             }
 
             /////////////////
@@ -96,7 +125,7 @@ namespace HabbitLogger
                 Console.WriteLine(@"//// Success! Whats next? \\\\");
                 Console.WriteLine("\n1 - Make another entry");
                 Console.WriteLine("2 - Return to menu");
-                Console.WriteLine("3 - Close trackington");
+                Console.WriteLine("0 - Close trackington");
                 Console.Write("\nEnter the number of your menu option: ");
                 string input = Console.ReadLine();
 
@@ -111,7 +140,7 @@ namespace HabbitLogger
                         case "2":
                             Menu();
                             break;
-                        case "3":
+                        case "0":
                             CloseApp();
                             break;
                         default:
@@ -143,7 +172,7 @@ namespace HabbitLogger
             ///////////////////
             string CaptureDate()
             {
-                Console.Write("\nWhat day did you hydate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
+                Console.Write("\nWhat day did you hydrate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
                 string result = Console.ReadLine();
 
                 bool done = false;
@@ -159,7 +188,7 @@ namespace HabbitLogger
                 
                 if (result.ToLower() == "today") result = DateTime.Today.ToString("MM/dd/yyyy");
                 Console.WriteLine($"Chosen date: {result}\n");
-                //TODO: validation. if user enters existing date, prompt them to combine qtys
+                //TODO: if user enters existing date, prompt them to combine qtys
 
                 return result;
             }
@@ -210,5 +239,12 @@ namespace HabbitLogger
                 Environment.Exit(0);
             }
         }
+    }
+
+    public class habit
+    {
+        public int Id { get; set; }
+        public string Date { get; set; }
+        public int Qty { get; set; }
     }
 }
