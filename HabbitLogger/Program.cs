@@ -162,9 +162,13 @@ namespace HabbitLogger
                     input = Console.ReadLine();
                 }
 
-                NonQuery(@"UPDATE hydrate
-                         SET 
-                         )");
+                string newDate = CaptureDate();
+                int newQty = CaptureQty();
+
+                NonQuery($"UPDATE hydrate SET Date = '{newDate}', Qty = {newQty} WHERE Id = {Convert.ToInt32(input)}");
+
+                Console.Clear();
+                HabitDashboard();
             }
 
             ////
