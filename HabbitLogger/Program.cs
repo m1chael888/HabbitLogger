@@ -142,6 +142,8 @@ namespace HabbitLogger
             ////
             void InsertOccurance()
             {
+                Console.WriteLine();
+                Console.WriteLine("(Enter 'back' to return to main menu)");
                 string date = CaptureDate();
                 int qty = CaptureQty();
 
@@ -153,15 +155,21 @@ namespace HabbitLogger
             ////
             void UpdateRecord()
             {
-                Console.Write("\nEnter the record number you would like to update: ");
+                Console.WriteLine("\n(Enter 'back' to return to main menu)");
+                Console.Write("Enter the record number you would like to update: ");
                 string input = Console.ReadLine();
 
-                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                if (input == "back") Menu();
+                else
                 {
-                    ErrorMsg($"Please enter a valid record number listed above: ");
-                    input = Console.ReadLine();
+                    while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                    {
+                        ErrorMsg($"Please enter a valid record number listed above: ");
+                        input = Console.ReadLine();
+                    }
                 }
 
+                Console.WriteLine();
                 string newDate = CaptureDate();
                 int newQty = CaptureQty();
 
@@ -174,13 +182,18 @@ namespace HabbitLogger
             ////
             void DeleteRecord()
             {
-                Console.Write("\nEnter the record number you would like to delete: ");
+                Console.WriteLine("\n(Enter 'back' to return to main menu)");
+                Console.Write("Enter the record number you would like to delete: ");
                 string input = Console.ReadLine();
 
-                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                if (input == "back") Menu();
+                else
                 {
-                    ErrorMsg($"Please enter a valid record number listed above: ");
-                    input = Console.ReadLine();
+                    while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                    {
+                        ErrorMsg($"Please enter a valid record number listed above: ");
+                        input = Console.ReadLine();
+                    }
                 }
 
                 NonQuery($"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'");
@@ -219,12 +232,16 @@ namespace HabbitLogger
                 bool done = false;
                 while (!done)
                 {
-                    if (!int.TryParse(input, out int qty))
+                    if (input == "back") Menu();
+                    else
                     {
-                        ErrorMsg("Please enter a whole number: ");
-                        input = Console.ReadLine();
+                        if (!int.TryParse(input, out int qty))
+                        {
+                            ErrorMsg("Please enter a whole number: ");
+                            input = Console.ReadLine();
+                        }
+                        else done = true;
                     }
-                    else done = true;
                 }
                 return Convert.ToInt32(input);
             }
@@ -232,24 +249,25 @@ namespace HabbitLogger
             //////
             string CaptureDate()
             {
-                Console.Write("\nWhat day did you hydrate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
+                Console.Write("What day did you hydrate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
                 string result = Console.ReadLine();
 
                 bool done = false;
                 while (!done)
                 {
-                    if (result != "today" && !DateTime.TryParse(result, out DateTime date))
+                    if (result == "back") Menu();
+                    else
                     {
-                        ErrorMsg("Please enter a valid date (MM/dd/yyyy format) or 'today' to use today's date: ");
-                        result = Console.ReadLine();
+                        if (result != "today" && !DateTime.TryParse(result, out DateTime date))
+                        {
+                            ErrorMsg("Please enter a valid date (MM/dd/yyyy format) or 'today' to use today's date: ");
+                            result = Console.ReadLine();
+                        }
+                        else done = true;
                     }
-                    else done = true;
                 }
-
                 if (result.ToLower() == "today") result = DateTime.Today.ToString("MM/dd/yyyy");
-                Console.WriteLine($"Chosen date: {result}");
-                //TODO: if user enters existing date, prompt them to combine qtys
-
+                
                 return result;
             }
 
