@@ -11,7 +11,11 @@ namespace HabbitLogger
 
             try
             {
-                InitializeDb(); 
+                NonQuery(@"CREATE TABLE IF NOT EXISTS hydrate(
+                         id INTEGER PRIMARY KEY AUTOINCREMENT,
+                         Date TEXT,
+                         Qty INTEGER
+                         )"); 
             }
             catch (Exception ex)
             {
@@ -24,9 +28,6 @@ namespace HabbitLogger
             void Menu()
             {
                 Console.Clear();
-
-                bool done = false;
-
                 Console.WriteLine(@"//// Trackington Menu \\\\");
                 Console.WriteLine("\n1 - View habit list and management");
                 Console.WriteLine("2 - Create new habit to track"); // challenge
@@ -34,19 +35,16 @@ namespace HabbitLogger
                 Console.Write("\nEnter the number of your menu option: ");
                 string input = Console.ReadLine();
 
+                bool done = false;
                 while (!done)
                 {
-                    
-
                     switch (input)
                     {
                         case "1":
                             HabitDashboard();
+                            done = true;
                             break;
                         case "2":
-                            NewHabit();
-                            break;
-                        case "3":
                             NewHabit(); // challenge
                             break;
                         case "0":
@@ -65,6 +63,7 @@ namespace HabbitLogger
             {
                 Console.Clear();
                 Console.WriteLine(@"//// Manage habits \\\\" + "\n");
+
                 ShowHabits();
 
                 Console.WriteLine("\n1 - Insert a record");
@@ -75,27 +74,35 @@ namespace HabbitLogger
                 Console.Write("\nEnter the number of your menu option: ");
                 string input = Console.ReadLine();
 
-                switch (input)
+                bool done = false;
+                while (!done)
                 {
-                    case "1":
-                        InsertOccurance();
-                        break;
-                    case "2":
-                        UpdateRecord();
-                        break;
-                    case "3":
-                        DeleteRecord();
-                        break;
-                    case "4":
-                        Menu();
-                        break;
-                    case "0":
-                        CloseApp();
-                        break;
-                    default:
-                        ErrorMsg("Please enter a valid menu number (0-4): ");
-                        input = Console.ReadLine();
-                        break;
+                    switch (input)
+                    {
+                        case "1":
+                            InsertOccurance();
+                            done = true;
+                            break;
+                        case "2":
+                            UpdateRecord();
+                            done = true;
+                            break;
+                        case "3":
+                            DeleteRecord();
+                            done = true;
+                            break;
+                        case "4":
+                            Menu();
+                            done = true;
+                            break;
+                        case "0":
+                            CloseApp();
+                            break;
+                        default:
+                            ErrorMsg("Please enter a valid menu number (0-4): ");
+                            input = Console.ReadLine();
+                            break;
+                    }
                 }
             }
 
@@ -138,17 +145,65 @@ namespace HabbitLogger
                 string date = CaptureDate();
                 int qty = CaptureQty();
 
+                NonQuery($"INSERT INTO hydrate(Date, Qty) VALUES('{date}', {qty})");
+
+                HabitDashboard();
+            }
+
+            ////
+            void UpdateRecord()
+            {
+                Console.Write("\nEnter the record number you would like to update: ");
+                string input = Console.ReadLine();
+
+                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                {
+                    ErrorMsg($"Please enter a valid record number listed above: ");
+                    input = Console.ReadLine();
+                }
+
+                NonQuery(@"UPDATE hydrate
+                         SET 
+                         )");
+            }
+
+            ////
+            void DeleteRecord()
+            {
+                Console.Write("\nEnter the record number you would like to delete: ");
+                string input = Console.ReadLine();
+
+                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
+                {
+                    ErrorMsg($"Please enter a valid record number listed above: ");
+                    input = Console.ReadLine();
+                }
+
+                NonQuery($"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'");
+
+                Console.Clear();
+                HabitDashboard();
+            }
+
+            ////
+            void NewHabit()
+            {
+
+            }
+
+            ////
+            void NonQuery(string commandText)
+            {
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"INSERT INTO hydrate(Date, Qty) VALUES('{date}', {qty})";
+                    command.CommandText = commandText;
 
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-                HabitDashboard();
             }
 
             ///
@@ -186,7 +241,7 @@ namespace HabbitLogger
                     }
                     else done = true;
                 }
-                
+
                 if (result.ToLower() == "today") result = DateTime.Today.ToString("MM/dd/yyyy");
                 Console.WriteLine($"Chosen date: {result}");
                 //TODO: if user enters existing date, prompt them to combine qtys
@@ -195,32 +250,6 @@ namespace HabbitLogger
             }
 
             ////
-            void DeleteRecord()
-            {
-                Console.Write("\nEnter the record number you would like to delete: ");
-                string input = Console.ReadLine();
-
-                while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
-                {
-                    ErrorMsg($"Please enter a valid record number listed above: ");
-                    input = Console.ReadLine();
-                }
-                
-                using var connection = new SqliteConnection(db);
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-
-                    command.CommandText = $"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'";
-
-                    command.ExecuteNonQuery();
-                    connection.Close();
-                }
-                Console.Clear();
-                HabitDashboard();
-            }
-            
-            ////
             bool validRecordNum(int id)
             {
                 foreach (var h in habitList)
@@ -228,38 +257,6 @@ namespace HabbitLogger
                     if (h.Id == id) return true;
                 }
                 return false;
-            }
-
-            ////
-            void NewHabit()
-            {
-
-            }
-
-            ////
-            void UpdateRecord()
-            {
-
-            }
-
-            ////
-            void InitializeDb()
-            {
-                using var connection = new SqliteConnection(db);
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-
-                    command.CommandText =
-                        @"CREATE TABLE IF NOT EXISTS hydrate(
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Date TEXT,
-                        Qty INTEGER
-                        )";
-
-                    command.ExecuteNonQuery();
-                    connection.Close();
-                }
             }
 
             ////
@@ -283,7 +280,7 @@ namespace HabbitLogger
     public class Habit
     {
         public int Id { get; set; }
-        public string Date { get; set; }
+        public required string Date { get; set; }
         public int Qty { get; set; }
     }
 }
