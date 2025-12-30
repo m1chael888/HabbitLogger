@@ -1,4 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.Data;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -148,7 +150,9 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"INSERT INTO hydrate(Date, Qty) VALUES('{date}', {qty})";
+                    command.CommandText = $"INSERT INTO hydrate(Date, Qty) VALUES(@date, @qty)";
+                    command.Parameters.Add("@date", SqliteType.Text).Value = date;
+                    command.Parameters.Add("@qty", SqliteType.Integer).Value = qty;
 
                     command.ExecuteNonQuery();
                     connection.Close();
@@ -182,7 +186,10 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"UPDATE hydrate SET Date = '{newDate}', Qty = {newQty} WHERE Id = {Convert.ToInt32(input)}";
+                    command.CommandText = $"UPDATE hydrate SET Date = @newDate, Qty = @newQty WHERE Id = @id";
+                    command.Parameters.Add("@newDate", SqliteType.Text).Value = newDate;
+                    command.Parameters.Add("@newQty", SqliteType.Integer).Value = newQty;
+                    command.Parameters.Add("@id", SqliteType.Integer).Value = Convert.ToInt32(input);
 
                     command.ExecuteNonQuery();
                     connection.Close();
@@ -214,7 +221,8 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'";
+                    command.CommandText = $"DELETE FROM hydrate WHERE Id=@id";
+                    command.Parameters.Add("@id", SqliteType.Integer).Value = Convert.ToInt32(input);
 
                     command.ExecuteNonQuery();
                     connection.Close();
