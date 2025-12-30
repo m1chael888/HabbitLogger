@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.Sqlite;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
