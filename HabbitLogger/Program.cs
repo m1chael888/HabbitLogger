@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -11,11 +12,7 @@ namespace HabbitLogger
 
             try
             {
-                NonQuery(@"CREATE TABLE IF NOT EXISTS hydrate(
-                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                         Date TEXT,
-                         Qty INTEGER
-                         )"); 
+                InitializeDb(); 
             }
             catch (Exception ex)
             {
@@ -147,8 +144,16 @@ namespace HabbitLogger
                 string date = CaptureDate();
                 int qty = CaptureQty();
 
-                NonQuery($"INSERT INTO hydrate(Date, Qty) VALUES('{date}', {qty})");
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
 
+                    command.CommandText = $"INSERT INTO hydrate(Date, Qty) VALUES('{date}', {qty})";
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
                 HabitDashboard();
             }
 
@@ -173,7 +178,16 @@ namespace HabbitLogger
                 string newDate = CaptureDate();
                 int newQty = CaptureQty();
 
-                NonQuery($"UPDATE hydrate SET Date = '{newDate}', Qty = {newQty} WHERE Id = {Convert.ToInt32(input)}");
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"UPDATE hydrate SET Date = '{newDate}', Qty = {newQty} WHERE Id = {Convert.ToInt32(input)}";
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
 
                 Console.Clear();
                 HabitDashboard();
@@ -196,7 +210,16 @@ namespace HabbitLogger
                     }
                 }
 
-                NonQuery($"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'");
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"DELETE FROM hydrate WHERE Id='{Convert.ToInt32(input)}'";
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
 
                 Console.Clear();
                 HabitDashboard();
@@ -208,15 +231,19 @@ namespace HabbitLogger
 
             }
 
-            ////
-            void NonQuery(string commandText)
+            void InitializeDb()
             {
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = commandText;
+                    command.CommandText = 
+                        @"CREATE TABLE IF NOT EXISTS hydrate(
+                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          Date TEXT,
+                          Qty INTEGER
+                          )";
 
                     command.ExecuteNonQuery();
                     connection.Close();
