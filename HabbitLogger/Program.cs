@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.Data;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -10,16 +9,11 @@ namespace HabbitLogger
         {
             string db = "Data Source=trackington.db";
             var habitList = new List<Habit>();
+            var seenHabit = new List<string>();
+            var habitOccurances = new List<Occurance>();
 
-            try
-            {
-                InitializeDb(); 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error initializing db: {ex.Message}");
-            }
-            
+            InitializeDb();
+
             Menu();
 
             ////
@@ -27,10 +21,16 @@ namespace HabbitLogger
             {
                 Console.Clear();
                 Console.WriteLine(@"//// Trackington Menu \\\\");
-                Console.WriteLine("\n1 - View habit list and management");
-                Console.WriteLine("2 - Create new habit to track"); // challenge
-                Console.WriteLine("0 - Close trackington");
-                Console.Write("\nEnter the number of your menu option: ");
+
+                Console.WriteLine("\n-+-+-+-+-+-+-+-+-+-+-+-+-+-");
+                ShowHabits();
+                Console.WriteLine("-+-+-+-+-+-+-+-+-+-+-+-+-+-");
+
+                Console.WriteLine("\na - Choose a habit to view or manage");
+                Console.WriteLine("b - Create new habit to track");
+                Console.WriteLine("c - Remove a habit and its records");
+                Console.WriteLine("x - Close trackington");
+                Console.Write("\nEnter the letter of your desired menu option: ");
                 string input = Console.ReadLine();
 
                 bool done = false;
@@ -38,18 +38,28 @@ namespace HabbitLogger
                 {
                     switch (input)
                     {
-                        case "1":
-                            HabitDashboard();
+                        case "a":
+                            if (habitList.Count == 0)
+                            {
+                                Red("You need to create a habit first: ");
+                                input = Console.ReadLine();
+                                break;
+                            }
+                            ChooseHabit();
                             done = true;
                             break;
-                        case "2":
-                            NewHabit(); // challenge
+                        case "b":
+                            NewHabit();
                             break;
-                        case "0":
+                        case "c":
+                            DeleteHabit();
+                            break;
+                            break;
+                        case "x":
                             CloseApp();
                             break;
                         default:
-                            ErrorMsg("Please enter a valid menu number (0-2): ");
+                            Red("Please enter a valid menu option: ");
                             input = Console.ReadLine();
                             break;
                     }
@@ -57,19 +67,21 @@ namespace HabbitLogger
             }
 
             ////
-            void HabitDashboard()
+            void ChosenHabit(int habit)
             {
                 Console.Clear();
-                Console.WriteLine(@"//// Manage habits \\\\" + "\n");
+                Console.WriteLine(@$"//// {habitList.First(x => x.Id == habit).Unit} \\\\");
 
-                ShowHabits();
+                Console.WriteLine("\n-+-+-+-+-+-+-+-+-+-+-+-+-+-");
+                ShowOccurances(habit);
+                Console.WriteLine("-+-+-+-+-+-+-+-+-+-+-+-+-+-");
 
-                Console.WriteLine("\n1 - Insert a record");
-                Console.WriteLine("2 - Update a record");
-                Console.WriteLine("3 - Delete a record");
-                Console.WriteLine("4 - Return to menu");
-                Console.WriteLine("0 - Close Trackington");
-                Console.Write("\nEnter the number of your menu option: ");
+                Console.WriteLine("\na - Insert a record");
+                Console.WriteLine("b - Update a record");
+                Console.WriteLine("c - Delete a record");
+                Console.WriteLine("d - Return to menu");
+                Console.WriteLine("x - Close Trackington");
+                Console.Write("\nEnter the letter of your desired menu option: ");
                 string input = Console.ReadLine();
 
                 bool done = false;
@@ -77,43 +89,108 @@ namespace HabbitLogger
                 {
                     switch (input)
                     {
-                        case "1":
-                            InsertOccurance();
+                        case "a":
+                            InsertOccurance(habit);
                             done = true;
                             break;
-                        case "2":
-                            UpdateRecord();
+                        case "b":
+                            UpdateRecord(habit);
                             done = true;
                             break;
-                        case "3":
-                            DeleteRecord();
+                        case "c":
+                            DeleteRecord(habit);
                             done = true;
                             break;
-                        case "4":
+                        case "d":
                             Menu();
                             done = true;
                             break;
-                        case "0":
+                        case "x":
                             CloseApp();
                             break;
                         default:
-                            ErrorMsg("Please enter a valid menu number (0-4): ");
+                            Red("Please enter a menu number option: ");
                             input = Console.ReadLine();
                             break;
                     }
+                }
+            }
+
+            ////
+            void ChooseHabit()
+            {
+                Console.WriteLine("\n(Enter '0' to cancel)");
+                Console.Write("Enter the number of the habit you would like to access: ");
+                int num;
+                string input = Console.ReadLine();
+
+                if (input == "0") Menu();
+                while (!int.TryParse(input, out num))
+                {
+                    Red("Please enter a valid habit number: ");
+                }
+                
+                if (num == 0) Menu();
+                else
+                {
+                    while (!habitList.Select(h => h.Id).Contains(num))
+                    {
+                        Red("Please enter a valid habit number: ");
+                        int.TryParse(Console.ReadLine(), out num);
+                    }
+                    ChosenHabit(num);
+                }
+            }
+
+            ////
+            void ShowOccurances(int habit){
+                habitOccurances.Clear();
+
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"SELECT * FROM Occurances WHERE HabitId=@habitid";
+                    command.Parameters.Add("@habitid", SqliteType.Integer).Value = habit;
+
+                    SqliteDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            habitOccurances.Add(
+                                new Occurance
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Date = reader.GetString(1),
+                                    Qty = reader.GetInt32(2)
+                                });
+                        }
+                    }
+
+                    if (habitOccurances.Count() > 0)
+                    {
+                        foreach (var o in habitOccurances)
+                        {
+                            Console.WriteLine($"Record {o.Id}: {o.Qty} times on {o.Date}");
+                        }
+                    }
+                    else Console.WriteLine("No occurances found for this habit :(");
                 }
             }
 
             ////
             void ShowHabits()
             {
-                habitList.Clear();
+                habitList.Clear(); seenHabit.Clear();
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"SELECT * FROM hydrate";
+                    command.CommandText = $"SELECT * FROM Habits";
 
                     SqliteDataReader reader = command.ExecuteReader();
 
@@ -125,23 +202,31 @@ namespace HabbitLogger
                                 new Habit
                                 {
                                     Id = reader.GetInt32(0),
-                                    Date = reader.GetString(1),
-                                    Qty = reader.GetInt32(2)
+                                    Unit = reader.GetString(1)
                                 });
                         }
                     }
-                    foreach (var h in habitList)
+
+                    if (habitList.Count() > 0)
                     {
-                        Console.WriteLine($"Record {h.Id}: Hydrated {h.Qty} times on {h.Date}");
+                        foreach (var h in habitList)
+                        {
+                            if (!seenHabit.Contains(h.Unit))
+                            {
+                                seenHabit.Add(h.Unit);
+                                Console.WriteLine($"Habit {h.Id}: {h.Unit}");
+                            }
+                        }
                     }
+                    else Console.WriteLine("No habits found :(");
                 }
             }
 
             ////
-            void InsertOccurance()
+            void InsertOccurance(int habit)
             {
                 Console.WriteLine();
-                Console.WriteLine("(Enter 'back' to return to main menu)");
+                Console.WriteLine("(Enter '0' to return to cancel)");
                 string date = CaptureDate();
                 int qty = CaptureQty();
 
@@ -150,29 +235,30 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"INSERT INTO hydrate(Date, Qty) VALUES(@date, @qty)";
+                    command.CommandText = $"INSERT INTO Occurances(Date, Qty, HabitId) VALUES(@date, @qty, @habitid)";
                     command.Parameters.Add("@date", SqliteType.Text).Value = date;
                     command.Parameters.Add("@qty", SqliteType.Integer).Value = qty;
+                    command.Parameters.Add("@habitid", SqliteType.Integer).Value = habit;
 
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-                HabitDashboard();
+                ChosenHabit(habit);
             }
 
             ////
-            void UpdateRecord()
+            void UpdateRecord(int habit)
             {
-                Console.WriteLine("\n(Enter 'back' to return to main menu)");
+                Console.WriteLine("\n(Enter '0' to cancel)");
                 Console.Write("Enter the record number you would like to update: ");
                 string input = Console.ReadLine();
 
-                if (input == "back") Menu();
+                if (input == "0") ChosenHabit(habit);
                 else
                 {
                     while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
                     {
-                        ErrorMsg($"Please enter a valid record number listed above: ");
+                        Red($"Please enter a valid record number listed above: ");
                         input = Console.ReadLine();
                     }
                 }
@@ -186,7 +272,7 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"UPDATE hydrate SET Date = @newDate, Qty = @newQty WHERE Id = @id";
+                    command.CommandText = $"UPDATE Occurances SET Date = @newDate, Qty = @newQty WHERE OccId = @id";
                     command.Parameters.Add("@newDate", SqliteType.Text).Value = newDate;
                     command.Parameters.Add("@newQty", SqliteType.Integer).Value = newQty;
                     command.Parameters.Add("@id", SqliteType.Integer).Value = Convert.ToInt32(input);
@@ -196,22 +282,22 @@ namespace HabbitLogger
                 }
 
                 Console.Clear();
-                HabitDashboard();
+                ChosenHabit(habit);
             }
 
             ////
-            void DeleteRecord()
+            void DeleteRecord(int habit)
             {
-                Console.WriteLine("\n(Enter 'back' to return to main menu)");
+                Console.WriteLine("\n(Enter '0' to cancel)");
                 Console.Write("Enter the record number you would like to delete: ");
                 string input = Console.ReadLine();
 
-                if (input == "back") Menu();
+                if (input == "0") ChosenHabit(0);
                 else
                 {
                     while (!int.TryParse(input, out int Id) || !validRecordNum(Id))
                     {
-                        ErrorMsg($"Please enter a valid record number listed above: ");
+                        Red($"Please enter a valid record number listed above: ");
                         input = Console.ReadLine();
                     }
                 }
@@ -221,7 +307,7 @@ namespace HabbitLogger
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = $"DELETE FROM hydrate WHERE Id=@id";
+                    command.CommandText = $"DELETE FROM Occurances WHERE OccId=@id";
                     command.Parameters.Add("@id", SqliteType.Integer).Value = Convert.ToInt32(input);
 
                     command.ExecuteNonQuery();
@@ -229,49 +315,80 @@ namespace HabbitLogger
                 }
 
                 Console.Clear();
-                HabitDashboard();
+                ChosenHabit(habit);
             }
 
             ////
-            void NewHabit()
+            void DeleteHabit()
             {
+                Console.WriteLine("\n(Enter '0' to cancel)");
+                Console.Write("Enter the number of the habit you would like to delete: ");
+                string input = Console.ReadLine();
 
-            }
+                if (input == "0") Menu();
+                else
+                {
+                    while (!int.TryParse(input, out int Id) || !validHabitNum(Id))
+                    {
+                        Red($"Please enter a valid record number listed above: ");
+                        input = Console.ReadLine();
+                    }
+                }
 
-            void InitializeDb()
-            {
                 using var connection = new SqliteConnection(db);
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
 
-                    command.CommandText = 
-                        @"CREATE TABLE IF NOT EXISTS hydrate(
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          Date TEXT,
-                          Qty INTEGER
-                          )";
+                    command.CommandText = @"DELETE FROM Occurances WHERE HabitId=@id;
+                                            DELETE FROM Habits WHERE HabitId=@id;";
+                    command.Parameters.Add("@id", SqliteType.Integer).Value = Convert.ToInt32(input);
 
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
+
+                Console.Clear();
+                Menu();
+            }
+
+            ////
+            void NewHabit()
+            {
+                Console.WriteLine();
+                Console.WriteLine("(Enter 0 to cancel)");
+
+                string unit = CaptureUnit();
+
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"INSERT INTO Habits(Unit) VALUES(@unit)";
+                    command.Parameters.Add("@unit", SqliteType.Text).Value = unit;
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+                Menu();
             }
 
             ///
             int CaptureQty()
             {
-                Console.Write("Enter the number of times you hydrated: ");
+                Console.Write("Enter the number of times you practiced your habit: ");
                 string input = Console.ReadLine();
 
                 bool done = false;
                 while (!done)
                 {
-                    if (input == "back") Menu();
+                    if (input == "c") Menu();
                     else
                     {
                         if (!int.TryParse(input, out int qty))
                         {
-                            ErrorMsg("Please enter a whole number: ");
+                            Red("Please enter a whole number: ");
                             input = Console.ReadLine();
                         }
                         else done = true;
@@ -283,18 +400,22 @@ namespace HabbitLogger
             //////
             string CaptureDate()
             {
-                Console.Write("What day did you hydrate? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
+                Console.Write("What date did the habit occur? (MM/dd/yyyy format) You can enter 'today' to use todays date: ");
                 string result = Console.ReadLine();
 
                 bool done = false;
                 while (!done)
                 {
-                    if (result == "back") Menu();
+                    if (result == "0")
+                    {
+                        done = true;
+                        Menu();
+                    } 
                     else
                     {
                         if (result != "today" && !DateTime.TryParse(result, out DateTime date))
                         {
-                            ErrorMsg("Please enter a valid date (MM/dd/yyyy format) or 'today' to use today's date: ");
+                            Red("Please enter a valid date (MM/dd/yyyy format) or 'today' to use today's date: ");
                             result = Console.ReadLine();
                         }
                         else done = true;
@@ -305,8 +426,45 @@ namespace HabbitLogger
                 return result;
             }
 
+            //////
+            string CaptureUnit()
+            {
+                Console.Write("Enter your desired habit name/measurement (i.e. Times Hydrated, Pushups Done): ");
+                string result = Console.ReadLine();
+
+                bool done = false;
+                while (!done)
+                {
+                    if (result == "0")
+                    {
+                        done = true;
+                        Menu();
+                    }
+                    foreach (char c in result)
+                    {
+                        if (!(char.IsLetter(c) || (char.IsWhiteSpace(c))))
+                        {
+                            Red("Please only include letters and spaces: ");
+                            result = Console.ReadLine();
+                            break;
+                        } else done = true;
+                    }
+                }
+                return result;
+            }
+
             ////
             bool validRecordNum(int id)
+            {
+                foreach (var h in habitOccurances)
+                {
+                    if (h.Id == id) return true;
+                }
+                return false;
+            }
+
+            ////
+            bool validHabitNum(int id)
             {
                 foreach (var h in habitList)
                 {
@@ -316,7 +474,7 @@ namespace HabbitLogger
             }
 
             ////
-            void ErrorMsg(string message)
+            void Red(string message)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Write($"!!! {message}");
@@ -330,10 +488,49 @@ namespace HabbitLogger
                 Console.WriteLine(@"\\\\ Come again soon ////");
                 Environment.Exit(0);
             }
+
+            ////
+            void SeedDb()
+            {
+
+            }
+
+            ////
+            void InitializeDb()
+            {
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText =
+                        @"CREATE TABLE IF NOT EXISTS Habits(
+                          HabitId INTEGER PRIMARY KEY AUTOINCREMENT,
+                          Unit TEXT
+                          );
+
+                          CREATE TABLE IF NOT EXISTS Occurances(
+                          OccId INTEGER PRIMARY KEY AUTOINCREMENT,
+                          Date TEXT,
+                          Qty INTEGER,
+                          HabitId INTEGER,
+                          FOREIGN KEY (HabitID) REFERENCES Habits(HabitID)
+                          )";
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+            }
         }
     }
 
     public class Habit
+    {
+        public int Id { get; set; }
+        public required string Unit { get; set; }
+    }
+
+    public class Occurance
     {
         public int Id { get; set; }
         public required string Date { get; set; }
