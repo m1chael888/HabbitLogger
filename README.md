@@ -19,7 +19,7 @@ Optional challenge requirements completed:
 * When opening the app, the user will usually be greeted by the main menu
 
 <img width="415" height="335" alt="image" src="https://github.com/user-attachments/assets/ad105115-eda9-478c-b2a8-d5d9618d0c16" />
-
+<br>
 * There may be a brief delay while the database seeds data when launching for the first time
 
 <img width="295" height="28" alt="image" src="https://github.com/user-attachments/assets/f6922c2b-f60e-419f-a3be-08ba2af850d6" />
