@@ -17,15 +17,19 @@ Optional challenge requirements completed:
 
 # How it works
 When opening the app, the user will usually be greeted by the main menu
+
 <img width="415" height="335" alt="image" src="https://github.com/user-attachments/assets/ad105115-eda9-478c-b2a8-d5d9618d0c16" />
 
 There may be a brief delay while the database seeds data when launching for the first time
+
 <img width="295" height="28" alt="image" src="https://github.com/user-attachments/assets/f6922c2b-f60e-419f-a3be-08ba2af850d6" />
 
 When choosing a main menu option, the user is then prompted to enter the number of the habit they would like to work with. Users are also able to enter 0 to cancel any follow-up prompt like this throughout the app. In this case, we'll view the aoccurances of habit 1
+
 <img width="526" height="90" alt="image" src="https://github.com/user-attachments/assets/4f6f83a3-b4be-4c2e-ac0d-25c2f9373589" />
 
 The user is then shown any records associated with their selected habit. Habits and occurances are saved in a relational database, with a one to many relationship between habits and occurances. Here we are viewing the data seeded during initialization
+
 <img width="419" height="579" alt="image" src="https://github.com/user-attachments/assets/95bdfd89-c722-4520-a831-af2781dc6f5c" />
 
 
