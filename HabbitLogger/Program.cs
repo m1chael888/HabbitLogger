@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.InteropServices.Marshalling;
+using System.Security.AccessControl;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -15,7 +16,6 @@ namespace HabbitLogger
             var habitOccurances = new List<Occurance>();
 
             InitializeDb();
-            ShouldSeed();
             Menu();
 
             ////
@@ -83,7 +83,7 @@ namespace HabbitLogger
                 Console.WriteLine("\n-+-+-+-+-+-+-+-+-+-+-+-+-+-");
                 ShowOccurances(habit);
                 Console.WriteLine("-+-+-+-+-+-+-+-+-+-+-+-+-+-");
-
+                
                 Console.WriteLine("\na - Insert a record");
                 Console.WriteLine("b - Update a record");
                 Console.WriteLine("c - Delete a record");
@@ -511,7 +511,10 @@ namespace HabbitLogger
             ////
             void SeedDb()
             {
-                string[] seedHabits = { "Pushups done", "Books read", "Bottles of water drank", "Miles ran" };
+                Console.Write("Seeding database, please hold...");
+
+                string[] seedHabits = 
+                    { "Pushups done", "Book pages read", "Bottles of water drank", "Miles ran", "Plants watered", "Pullups done" };
                 var seedOccurances = new List<List<string>>();
                 var rand = new Random();
 
@@ -523,13 +526,32 @@ namespace HabbitLogger
                     {
                         var command = connection.CreateCommand();
 
-                        command.CommandText = $"INSERT INTO Habits(Unit) VALUES(@habitUnit)";
-                        command.Parameters.Add("@habitUnit", SqliteType.Text).Value = s;
+                        command.CommandText = $"INSERT INTO Habits(Unit) VALUES(@unit)";
+                        command.Parameters.Add("@unit", SqliteType.Text).Value = s;
+
+                        command.ExecuteNonQuery();
+                    }
+
+                    for (int i = 0; i < 100; i++)
+                    {
+                        var command = connection.CreateCommand();
+
+                        command.CommandText = $"INSERT INTO Occurances(Date, Qty, HabitId) VALUES(@date, @qty, @habitId)";
+
+                        string date = "";
+                        while (!DateTime.TryParse(date, out var date2))
+                        {
+                            date = $"{rand.Next(13)}/{rand.Next(32)}/{rand.Next(2020, 2027)}";
+                        }
+                        command.Parameters.Add("@date", SqliteType.Text).Value = date;
+                        command.Parameters.Add("@qty", SqliteType.Integer).Value = rand.Next(1000);
+                        command.Parameters.Add("@habitId", SqliteType.Integer).Value = rand.Next(1, 7);
 
                         command.ExecuteNonQuery();
                     }
                     connection.Close();
                 }
+                Console.Clear();
             }
 
             ////
@@ -557,6 +579,7 @@ namespace HabbitLogger
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
+                ShouldSeed();
             }
         }
     }
