@@ -197,10 +197,10 @@ namespace HabbitLogger
                 {
                     foreach (var h in habitList)
                     {
-                        if (!seenHabit.Contains(h.Unit))
+                        if (!seenHabit.Contains(h.Id.ToString()))
                         {
-                            seenHabit.Add(h.Unit);
-                            Console.WriteLine($"Habit {h.Id.ToString().PadRight(4)}-  {h.Unit}");
+                            seenHabit.Add(h.Id.ToString());
+                            Console.WriteLine($"Habit {h.Id.ToString().PadRight(4)}-  {habitList.First(x => x.Id == h.Id).Unit}");
                         }
                     }
                 }
