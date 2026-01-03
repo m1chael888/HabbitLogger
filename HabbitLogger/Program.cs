@@ -1,5 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.Data;
+using System.Diagnostics;
+using System.Runtime.InteropServices.Marshalling;
 //// m1chael888 \\\\
 namespace HabbitLogger
 { 
@@ -13,7 +15,7 @@ namespace HabbitLogger
             var habitOccurances = new List<Occurance>();
 
             InitializeDb();
-
+            ShouldSeed();
             Menu();
 
             ////
@@ -41,7 +43,7 @@ namespace HabbitLogger
                         case "a":
                             if (habitList.Count == 0)
                             {
-                                Red("You need to create a habit first: ");
+                                Red("No habits to view, choose another option: ");
                                 input = Console.ReadLine();
                                 break;
                             }
@@ -52,6 +54,12 @@ namespace HabbitLogger
                             NewHabit();
                             break;
                         case "c":
+                            if (habitList.Count == 0)
+                            {
+                                Red("No habits to delete, choose another option: ");
+                                input = Console.ReadLine();
+                                break;
+                            }
                             DeleteHabit();
                             break;
                             break;
@@ -262,7 +270,7 @@ namespace HabbitLogger
                         input = Console.ReadLine();
                     }
                 }
-
+                                                                                                                                                                
                 Console.WriteLine();
                 string newDate = CaptureDate();
                 int newQty = CaptureQty();
@@ -280,7 +288,6 @@ namespace HabbitLogger
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-
                 Console.Clear();
                 ChosenHabit(habit);
             }
@@ -313,7 +320,6 @@ namespace HabbitLogger
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-
                 Console.Clear();
                 ChosenHabit(habit);
             }
@@ -347,7 +353,6 @@ namespace HabbitLogger
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
-
                 Console.Clear();
                 Menu();
             }
@@ -422,7 +427,6 @@ namespace HabbitLogger
                     }
                 }
                 if (result.ToLower() == "today") result = DateTime.Today.ToString("MM/dd/yyyy");
-                
                 return result;
             }
 
@@ -490,9 +494,42 @@ namespace HabbitLogger
             }
 
             ////
+            void ShouldSeed()
+            {
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"SELECT COUNT(HabitId) FROM Habits";
+
+                    int rows = Convert.ToInt32(command.ExecuteScalar());
+                    if (rows == 0) SeedDb();
+                }
+            }
+
+            ////
             void SeedDb()
             {
+                string[] seedHabits = { "Pushups done", "Books read", "Bottles of water drank", "Miles ran" };
+                var seedOccurances = new List<List<string>>();
+                var rand = new Random();
 
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+
+                    foreach (var s in seedHabits)
+                    {
+                        var command = connection.CreateCommand();
+
+                        command.CommandText = $"INSERT INTO Habits(Unit) VALUES(@habitUnit)";
+                        command.Parameters.Add("@habitUnit", SqliteType.Text).Value = s;
+
+                        command.ExecuteNonQuery();
+                    }
+                    connection.Close();
+                }
             }
 
             ////
