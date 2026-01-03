@@ -200,7 +200,7 @@ namespace HabbitLogger
                         if (!seenHabit.Contains(h.Id.ToString()))
                         {
                             seenHabit.Add(h.Id.ToString());
-                            Console.WriteLine($"Habit {h.Id.ToString().PadRight(4)}-  {habitList.First(x => x.Id == h.Id).Unit}");
+                            Console.WriteLine($"Habit {h.Id.ToString().PadRight(3)}-  {habitList.First(x => x.Id == h.Id).Unit}");
                         }
                     }
                 }
