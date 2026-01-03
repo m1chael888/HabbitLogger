@@ -62,7 +62,6 @@ namespace HabbitLogger
                             }
                             DeleteHabit();
                             break;
-                            break;
                         case "x":
                             CloseApp();
                             break;
@@ -182,7 +181,7 @@ namespace HabbitLogger
                     {
                         foreach (var o in habitOccurances)
                         {
-                            Console.WriteLine($"Record {o.Id}: {o.Qty} times on {o.Date}");
+                            Console.WriteLine($"Record {o.Id}  -  {o.Qty} times on {o.Date}");
                         }
                     }
                     else Console.WriteLine("No occurances found for this habit :(");
@@ -193,41 +192,19 @@ namespace HabbitLogger
             void ShowHabits()
             {
                 habitList.Clear(); seenHabit.Clear();
-                using var connection = new SqliteConnection(db);
+                populateHabitList();
+                if (habitList.Count() > 0)
                 {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-
-                    command.CommandText = $"SELECT * FROM Habits";
-
-                    SqliteDataReader reader = command.ExecuteReader();
-
-                    if (reader.HasRows)
+                    foreach (var h in habitList)
                     {
-                        while (reader.Read())
+                        if (!seenHabit.Contains(h.Unit))
                         {
-                            habitList.Add(
-                                new Habit
-                                {
-                                    Id = reader.GetInt32(0),
-                                    Unit = reader.GetString(1)
-                                });
+                            seenHabit.Add(h.Unit);
+                            Console.WriteLine($"Habit {h.Id}  -  {h.Unit}");
                         }
                     }
-
-                    if (habitList.Count() > 0)
-                    {
-                        foreach (var h in habitList)
-                        {
-                            if (!seenHabit.Contains(h.Unit))
-                            {
-                                seenHabit.Add(h.Unit);
-                                Console.WriteLine($"Habit {h.Id}: {h.Unit}");
-                            }
-                        }
-                    }
-                    else Console.WriteLine("No habits found :(");
                 }
+                else Console.WriteLine("No habits found :(");
             }
 
             ////
@@ -509,6 +486,33 @@ namespace HabbitLogger
             }
 
             ////
+            void populateHabitList()
+            {
+                using var connection = new SqliteConnection(db);
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+
+                    command.CommandText = $"SELECT * FROM Habits";
+
+                    SqliteDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            habitList.Add(
+                                new Habit
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Unit = reader.GetString(1)
+                                });
+                        }
+                    }
+                }
+            }
+
+            ////
             void SeedDb()
             {
                 Console.Write("Seeding database, please hold...");
@@ -532,6 +536,7 @@ namespace HabbitLogger
                         command.ExecuteNonQuery();
                     }
 
+                    populateHabitList();
                     for (int i = 0; i < 100; i++)
                     {
                         var command = connection.CreateCommand();
@@ -545,7 +550,14 @@ namespace HabbitLogger
                         }
                         command.Parameters.Add("@date", SqliteType.Text).Value = date;
                         command.Parameters.Add("@qty", SqliteType.Integer).Value = rand.Next(1000);
-                        command.Parameters.Add("@habitId", SqliteType.Integer).Value = rand.Next(1, 7);
+
+                        int id;
+                        if (habitList.Count() > 0) 
+                        {
+                            id = habitList[rand.Next(0, habitList.Count())].Id;
+                        } 
+                        else id = rand.Next(1, 7);
+                        command.Parameters.Add("@habitId", SqliteType.Integer).Value = id;
 
                         command.ExecuteNonQuery();
                     }
