@@ -181,7 +181,7 @@ namespace HabbitLogger
                     {
                         foreach (var o in habitOccurances)
                         {
-                            Console.WriteLine($"Record {o.Id}  -  {o.Qty} times on {o.Date}");
+                            Console.WriteLine($"Record {o.Id.ToString().PadRight(4)} -  {o.Qty}  times ({o.Date})");
                         }
                     }
                     else Console.WriteLine("No occurances found for this habit :(");
@@ -200,7 +200,7 @@ namespace HabbitLogger
                         if (!seenHabit.Contains(h.Unit))
                         {
                             seenHabit.Add(h.Unit);
-                            Console.WriteLine($"Habit {h.Id}  -  {h.Unit}");
+                            Console.WriteLine($"Habit {h.Id.ToString().PadRight(4)}-  {h.Unit}");
                         }
                     }
                 }
@@ -537,7 +537,7 @@ namespace HabbitLogger
                     }
 
                     populateHabitList();
-                    for (int i = 0; i < 100; i++)
+                    for (int i = 0; i < 77; i++)
                     {
                         var command = connection.CreateCommand();
 
